@@ -1,46 +1,49 @@
-import { IProduct } from "../../types";
+import { IProduct } from '../../types';  // ← ../../types
 
 /**
  * Каталог продуктов.
  */
 export class Products {
-  private _productsArray: IProduct[] = [];
-  private _productSelected: IProduct | null = null;
+    private _productsArray: IProduct[] = [];
+    private _productSelected: IProduct | null = null;
 
-  /**
-   * Получить продукт по идентификатору.
-   * @param id идентификатор продукта.
-   * @returns если нашли то продукт, иначе undefined.
-   */
-  getProductByID(id: string): IProduct | undefined {
-    return this._productsArray.find((x) => x.id === id);
-  }
+    // === Методы из ТЗ для совместимости ===
+    
+    setItems(items: IProduct[]): void {
+        this._productsArray = items;
+    }
 
-  /**
-   * Получить список всех продуктов.
-   */
-  get productsArray(): IProduct[] {
-    return this._productsArray;
-  }
+    getItems(): IProduct[] {
+        return this._productsArray;
+    }
 
-  /**
-   * Установить список всех продуктов.
-   */
-  set productsArray(value: IProduct[]) {
-    this._productsArray = value;
-  }
+    getProductById(id: string): IProduct | undefined {
+        return this._productsArray.find(x => x.id === id);
+    }
 
-  /**
-   * Получить выбранный продукт.
-   */
-  get productSelected(): IProduct | null {
-    return this._productSelected;
-  }
+    setPreview(product: IProduct | null): void {
+        this._productSelected = product;
+    }
 
-  /**
-   * Установить выбранный рподукт.
-   */
-  set productSelected(value: IProduct) {
-    this._productSelected = value;
-  }
+    getPreview(): IProduct | null {
+        return this._productSelected;
+    }
+
+    // === Ваши оригинальные геттеры/сеттеры (оставьте для обратной совместимости) ===
+    
+    get productsArray(): IProduct[] {
+        return this._productsArray;
+    }
+
+    set productsArray(value: IProduct[]) {
+        this._productsArray = value;
+    }
+
+    get productSelected(): IProduct | null {
+        return this._productSelected;
+    }
+
+    set productSelected(value: IProduct | null) {
+        this._productSelected = value;
+    }
 }

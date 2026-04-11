@@ -1,69 +1,72 @@
-import { IProduct } from "../../types";
+import { IProduct } from '../../types';  // ← ../../types
 
 /**
  * Корзина.
  */
 export class Basket {
-  private _products: IProduct[] = [];
+    private _products: IProduct[] = [];
 
-  /**
-   * Добавить продукт в корзину.
-   * @param product продукт.
-   */
-  addProduct(product: IProduct): void {
-    this._products.push(product);
-  }
+    // === Методы из ТЗ ===
+    
+    addItem(product: IProduct): void {
+        this.addProduct(product);
+    }
 
-  /**
-   * Удалить продукт из корзины.
-   * @param id идентификатор продукта.
-   */
-  deleteProduct(id: string): void {
-    this._products = this._products.filter((x) => x.id !== id);
-  }
+    removeItem(id: string): void {
+        this.deleteProduct(id);
+    }
 
-  /**
-   * Очистить корзину.
-   */
-  clearProducts(): void {
-    this._products = [];
-  }
+    clear(): void {
+        this.clearProducts();
+    }
 
-  /**
-   * Получить общую сумму по полю price.
-   * @returns сумма по полю price.
-   */
-  getTotalAmount(): number {
-    return this._products.reduce(
-      (acc, item) => {
-        acc.price += item.price ?? 0;
-        return acc;
-      },
-      { price: 0 },
-    ).price;
-  }
+    getTotalPrice(): number {
+        return this.getTotalAmount();
+    }
 
-  /**
-   * Получить общее количество товаров в корзине.
-   * @returns сколько продуктов в корзине.
-   */
-  getTotalCount(): number {
-    return this._products.length;
-  }
+    getCount(): number {
+        return this.getTotalCount();
+    }
 
-  /**
-   * Проверка что продукт находится в корзине.
-   * @param id идентификатор продукта, который проверяем.
-   * @returns true если продукт есть в корзине, иначе false.
-   */
-  isProductInProducts(id: string): boolean {
-    return this._products.some((x) => x.id === id);
-  }
+    isInBasket(id: string): boolean {
+        return this.isProductInProducts(id);
+    }
 
-  /**
-   * Получить список продуктов в корзине.
-   */
-  get products(): IProduct[] {
-    return this._products;
-  }
+    getItems(): IProduct[] {
+        return this.products;
+    }
+
+    // === Ваши оригинальные методы ===
+    
+    addProduct(product: IProduct): void {
+        if (!this.isProductInProducts(product.id)) {
+            this._products.push(product);
+        }
+    }
+
+    deleteProduct(id: string): void {
+        this._products = this._products.filter(x => x.id !== id);
+    }
+
+    clearProducts(): void {
+        this._products = [];
+    }
+
+    getTotalAmount(): number {
+        return this._products.reduce((acc, item) => {
+            return acc + (item.price ?? 0);
+        }, 0);
+    }
+
+    getTotalCount(): number {
+        return this._products.length;
+    }
+
+    isProductInProducts(id: string): boolean {
+        return this._products.some(x => x.id === id);
+    }
+
+    get products(): IProduct[] {
+        return this._products;
+    }
 }
