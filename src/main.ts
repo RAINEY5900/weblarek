@@ -1,64 +1,127 @@
+// @ts-nocheck
+import { EventEmitter } from './components/base/Events';
 import { Api } from './components/base/Api';
-import { Communicator } from './components/Communicator';
-import { Products } from './components/Models/Products';
-import { Basket } from './components/Models/Basket';
-import { Buyer } from './components/Models/Buyer';
 import { API_URL } from './utils/constants';
-import { apiProducts } from './utils/data';
+import { Catalog } from './components/models/Catalog';
+import { Cart } from './components/models/Cart';
+import { User } from './components/models/User';
+import { UserApi } from './components/models/UserApi';
+import { Presenter } from './components/presenter/Presenter';
+import { Header } from './components/views/Header';
+import { Gallery } from './components/views/Gallery';
+import { Modal } from './components/views/Modal';
+import { FormPaymentAddress } from './components/views/FormPaymentAddress';
+import { FormEmailPhone } from './components/views/FormEmailPhone';
+import { Success } from './components/views/Success';
+import { CartView } from './components/views/Cart';
+import { cloneTemplate, ensureElement } from './utils/utils';
 import { IProduct } from './types';
+import './scss/styles.scss';
 
-console.log('=== ТЕСТИРОВАНИЕ МОДЕЛЕЙ ДАННЫХ ===\n');
-
-const productsModel = new Products();
-const basketModel = new Basket();
-const buyerModel = new Buyer();
-
-// 1. Тест Products (все методы)
-console.log('1. Тест Products:');
-productsModel.setItems(apiProducts.items);
-console.log('   getItems():', productsModel.getItems().length, 'товаров');
-console.log('   getProductById():', productsModel.getProductById(apiProducts.items[0]?.id)?.title);
-productsModel.setPreview(apiProducts.items[0]);
-console.log('   getPreview():', productsModel.getPreview()?.title);
-productsModel.setPreview(null);
-console.log('   getPreview() после сброса:', productsModel.getPreview());
-
-// 2. Тест Basket (все методы)
-console.log('\n2. Тест Basket:');
-console.log('   getCount() до добавления:', basketModel.getCount());
-basketModel.addItem(apiProducts.items[0]);
-basketModel.addItem(apiProducts.items[1]);
-console.log('   getCount() после добавления:', basketModel.getCount());
-console.log('   getTotalPrice():', basketModel.getTotalPrice());
-console.log('   isInBasket():', basketModel.isInBasket(apiProducts.items[0].id));
-basketModel.removeItem(apiProducts.items[0].id);
-console.log('   getCount() после удаления:', basketModel.getCount());
-basketModel.clear();
-console.log('   getCount() после clear():', basketModel.getCount());
-
-// 3. Тест Buyer (все методы)
-console.log('\n3. Тест Buyer:');
-console.log('   isValid() до заполнения:', buyerModel.isValid());
-buyerModel.updateInformation({ email: 'test@example.com' });
-console.log('   после updateInformation(email):', buyerModel.getInformation());
-buyerModel.updateInformation({ phone: '+79991234567', address: 'ул. Тестовая, 1' });
-console.log('   после updateInformation(phone, address):', buyerModel.getInformation());
-console.log('   isValid() после заполнения:', buyerModel.isValid());
-console.log('   validateInformation():', buyerModel.validateInformation());
-buyerModel.clearInformation();
-console.log('   после clearInformation():', buyerModel.getInformation());
-
-// 4. Запрос к серверу
-console.log('\n4. Запрос к серверу:');
+const events = new EventEmitter();
 const api = new Api(API_URL);
-const communicator = new Communicator(api);
 
-communicator.getProducts()
-    .then((response: { items: IProduct[] }) => {
-        console.log('   ✅ Успешно! Получено товаров:', response.items.length);
-        productsModel.setItems(response.items);
-        console.log('   Каталог обновлен данными с сервера');
-    })
-    .catch((error: Error) => {
-        console.error('   ❌ Ошибка:', error.message);
-    });
+const catalog = new Catalog(events);
+const cart = new Cart(events);
+const user = new User();
+const userApi = new UserApi(api);
+
+const modal = new Modal(
+    ensureElement<HTMLElement>('#modal-container'),
+    events
+);
+const header = new Header(
+    ensureElement<HTMLElement>('.header'),
+    events
+);
+const gallery = new Gallery(
+    ensureElement<HTMLElement>('.gallery'),
+    events
+);
+
+const formPaymentAddress = new FormPaymentAddress(
+    cloneTemplate('#order') as HTMLFormElement,
+    events
+);
+
+const formEmailPhone = new FormEmailPhone(
+    cloneTemplate('#contacts') as HTMLFormElement,
+    events
+);
+
+const cartView = new CartView(
+    cloneTemplate('#basket') as HTMLElement,
+    events
+);
+
+const success = new Success(
+    cloneTemplate('#success') as HTMLElement,
+    events
+);
+
+new Presenter(
+    events,
+    catalog,
+    cart,
+    user,
+    userApi,
+    gallery,
+    modal,
+    cartView,
+    formPaymentAddress,
+    formEmailPhone,
+    success
+);
+
+(async () => {
+    const data = await userApi.get();
+    catalog.setProducts(data.items);
+})();
+
+events.on('cart:changed', () => {
+    header.count = cart.getCount();
+    cartView.data = {
+        items: cart.getProducts(),
+        total: cart.getTotalPrice(),
+        disabled: cart.getCount() === 0,
+    };
+    cartView.onCardRemove = (id) => {
+        events.emit('card:removed', { id });
+    };
+});
+
+events.on('cart:opened', () => {
+    modal.open(cartView.container);
+});
+
+events.on('order:open', () => {
+    formPaymentAddress.errors = {};
+    formPaymentAddress.payment = null;
+    formPaymentAddress.address = '';
+    modal.open(formPaymentAddress.container);
+});
+
+events.on('order:next', () => {
+    formEmailPhone.errors = {};
+    formEmailPhone.email = '';
+    formEmailPhone.phone = '';
+    modal.open(formEmailPhone.container);
+});
+
+events.on('order:submitted', async () => {
+    const order = {
+        ...user.get(),
+        items: cart.getProducts().map((p: IProduct) => p.id),
+        total: cart.getTotalPrice(),
+    };
+    const response = await userApi.post(order);
+    cart.clear();
+    user.clear();
+    success.total = response.total;
+    modal.open(success.container);
+});
+
+events.on('success:close', () => {
+    modal.close();
+    header.count = cart.getCount();
+});

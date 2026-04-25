@@ -1,0 +1,34 @@
+import { Catalog } from '../components/models/Catalog';
+import { EventEmitter } from '../components/base/Events';
+import { apiProducts } from '../utils/data';
+
+
+export function testCatalog(): void {
+    const productsModel = new Catalog(new EventEmitter());
+
+    productsModel.setProducts(apiProducts.items);
+    console.info(
+        'Массив товаров из каталога: ', 
+        productsModel.getProducts(),
+    );
+    const chosenProduct = productsModel.getProductById(apiProducts.items[0].id);
+    console.info(
+        'Избранный продукт: ',
+        productsModel.getDetailedProduct(),
+    );
+    console.info(
+        'Один товар из каталога: ',
+        chosenProduct,
+    );
+    if (chosenProduct) {
+        productsModel.setDetailedProduct(chosenProduct);
+        console.info('Продукт добавлен в избранное');
+    } else {
+        console.error("Товар не найден!");
+    }
+    
+    console.info(
+        'Избранный продукт: ',
+        productsModel.getDetailedProduct(),
+    );
+}
