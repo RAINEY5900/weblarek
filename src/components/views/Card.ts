@@ -10,6 +10,10 @@ export abstract class Card<T> extends Component<T> {
         this._price = container.querySelector('.card__price') as HTMLElement;
     }
 
+    get container(): HTMLElement {
+        return this._container;
+    }
+
     set title(value: string) {
         if (this._title) this._title.textContent = value;
     }

@@ -38,6 +38,12 @@ export class Presenter {
     ) {
         this.bindEvents();
         this.loadCatalog();
+        
+        // Создаем экземпляр превью один раз
+        this.cardDetailed = new CardDetailed(this.cardPreviewTemplate.cloneNode(true) as HTMLElement);
+        this.cardDetailed.onClick = () => {
+            this.events.emit('preview:toggle');
+        };
     }
 
     private async loadCatalog(): Promise<void> {
@@ -54,6 +60,10 @@ export class Presenter {
             this.renderCatalog();
         });
 
+        this.events.on('catalog:previewChanged', () => {
+            this.openPreview();
+        });
+
         this.events.on('cart:changed', () => {
             this.renderCart();
             this.renderHeader();
@@ -68,7 +78,6 @@ export class Presenter {
             const product = this.catalog.getProductById(data.id);
             if (product) {
                 this.catalog.setDetailedProduct(product);
-                this.openPreview();
             }
         });
 
@@ -93,10 +102,7 @@ export class Presenter {
         });
 
         this.events.on('order:next', () => {
-            const userData = this.user.get();
-            if (userData.payment && userData.address) {
-                this.modal.open(this.formEmailPhone.container);
-            }
+            this.modal.open(this.formEmailPhone.container);
         });
 
         this.events.on('order:submit', async () => {
@@ -120,6 +126,29 @@ export class Presenter {
             this.modal.close();
             this.renderHeader();
         });
+
+        this.events.on('payment:changed', (data: { payment: string }) => {
+            this.user.set({ payment: data.payment as TPayment });
+        });
+
+        this.events.on('address:changed', (data: { address: string }) => {
+            this.user.set({ address: data.address });
+        });
+
+        this.events.on('email:changed', (data: { email: string }) => {
+            this.user.set({ email: data.email });
+        });
+
+        this.events.on('phone:changed', (data: { phone: string }) => {
+            this.user.set({ phone: data.phone });
+        });
+
+        this.events.on('card:removed', (data: { id: string }) => {
+            const product = this.catalog.getProductById(data.id);
+            if (product) {
+                this.cart.removeProduct(product);
+            }
+        });
     }
 
     private renderCatalog(): void {
@@ -136,7 +165,7 @@ export class Presenter {
             card.onClick = (id: string) => {
                 this.events.emit('card:select', { id });
             };
-            return card.render();
+            return card.container;
         });
         this.gallery.render({ catalog: elements });
     }
@@ -153,13 +182,12 @@ export class Presenter {
             card.onClickRemove = () => {
                 this.events.emit('card:removed', { id: product.id });
             };
-            return card.render();
+            return card.container;
         });
-        this.cartView.render({
-            items: items,
-            total: this.cart.getTotalPrice(),
-            disabled: this.cart.getCount() === 0
-        });
+        
+        this.cartView.items = items;
+        this.cartView.total = this.cart.getTotalPrice();
+        this.cartView.disabled = this.cart.getCount() === 0;
     }
 
     private renderHeader(): void {
@@ -170,7 +198,6 @@ export class Presenter {
         const product = this.catalog.getDetailedProduct();
         if (!product) return;
 
-        this.cardDetailed = new CardDetailed(this.cardPreviewTemplate.cloneNode(true) as HTMLElement);
         this.cardDetailed.render({
             id: product.id,
             title: product.title,
@@ -181,20 +208,13 @@ export class Presenter {
             isInCart: this.cart.contains(product.id),
             isAvailable: product.price !== null
         });
-        this.cardDetailed.onClick = () => {
-            this.events.emit('preview:toggle');
-        };
-        this.modal.open(this.cardDetailed.render());
+        this.modal.open(this.cardDetailed.container);
     }
 
     private updatePreviewButton(): void {
-        if (this.cardDetailed) {
-            const product = this.catalog.getDetailedProduct();
-            if (product) {
-                this.cardDetailed.render({
-                    isInCart: this.cart.contains(product.id)
-                });
-            }
+        const product = this.catalog.getDetailedProduct();
+        if (this.cardDetailed && product) {
+            this.cardDetailed.isInCart = this.cart.contains(product.id);
         }
     }
 

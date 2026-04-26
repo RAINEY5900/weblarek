@@ -10,17 +10,22 @@ export class CardCart extends Card<any> {
         this._index = container.querySelector('.basket__item-index') as HTMLElement;
         this._deleteButton = container.querySelector('.card__button') as HTMLButtonElement;
         
-        this._deleteButton.addEventListener('click', () => {
+        this._deleteButton.addEventListener('click', (e) => {
+            e.stopPropagation();
             this.onClickRemove();
         });
     }
 
-    render(data: any): HTMLElement {
+    set index(value: number) {
+        if (this._index) {
+            this._index.textContent = String(value);
+        }
+    }
+
+    render(data: { title: string; price: number | null; index: number }): HTMLElement {
         this.title = data.title;
         this.price = data.price;
-        if (this._index && data.index) {
-            this._index.textContent = String(data.index);
-        }
+        this.index = data.index;
         return this._container;
     }
 }
