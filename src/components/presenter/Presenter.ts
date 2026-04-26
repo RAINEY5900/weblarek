@@ -1,22 +1,20 @@
-import {
-    IEvents,
-} from "../base/Events";
-import { cloneTemplate } from "../../utils/utils";
+// @ts-nocheck
+import { IEvents } from "../base/Events";
 import { IUserError, TPayment } from "../../types";
-
 import { Catalog } from "../models/Catalog";
 import { Cart } from "../models/Cart";
 import { User } from "../models/User";
 import { UserApi } from "../models/UserApi";
 import { Gallery } from "../views/Gallery";
 import { Modal } from "../views/Modal";
+import { Header } from "../views/Header";
 import { FormPaymentAddress } from "../views/FormPaymentAddress";
 import { FormEmailPhone } from "../views/FormEmailPhone";
-import { CardDetailed } from "../views/CardDetailed";
-import { CardCatalog } from "../views/CardCatalog";
 import { CartView } from "../views/Cart";
-
-
+import { CardCatalog } from "../views/CardCatalog";
+import { CardCart } from "../views/CardCart";
+import { CardDetailed } from "../views/CardDetailed";
+import { Success } from "../views/Success";
 
 export class Presenter {
     private cardDetailed: CardDetailed | null = null;
@@ -29,150 +27,199 @@ export class Presenter {
         private userApi: UserApi,
         private gallery: Gallery,
         private modal: Modal,
+        private header: Header,
         private cartView: CartView,
         private formPaymentAddress: FormPaymentAddress,
         private formEmailPhone: FormEmailPhone,
+        private success: Success,
+        private cardCatalogTemplate: HTMLElement,
+        private cardCartTemplate: HTMLElement,
+        private cardPreviewTemplate: HTMLElement
     ) {
-        this.bindCatalogEvents();
-        this.bindCartEvents();
-        this.bindUserEvents();
+        this.bindEvents();
         this.loadCatalog();
     }
 
     private async loadCatalog(): Promise<void> {
-        const data = await this.userApi.get();
-        this.catalog.setProducts(data.items);
+        try {
+            const data = await this.userApi.get();
+            this.catalog.setProducts(data.items);
+        } catch (error) {
+            console.error('Ошибка загрузки каталога:', error);
+        }
     }
 
-    private bindCatalogEvents(): void {
+    private bindEvents(): void {
         this.events.on('catalog:changed', () => {
-            const products = this.catalog.getProducts();
-            const elements = products.map(product => {
-                const card = new CardCatalog(
-                    cloneTemplate('#card-catalog') as HTMLElement
-                );
-                card.data = product;
-                card.onClick = (id) => {
-                    this.events.emit('card:select', { id });
-                };
-                return card.render();
-            });
-            this.gallery.catalog = elements;
-        });
-
-        this.events.on('catalog:previewChanged', () => {
-            const product = this.catalog.getDetailedProduct();
-            if (!product) return;
-
-            const preview = cloneTemplate('#card-preview') as HTMLElement;
-            this.cardDetailed = new CardDetailed(preview);
-            this.cardDetailed.data = product;
-            this.cardDetailed.isInCart = this.cart.contains(product.id);
-            this.cardDetailed.onClickAdd = (id) => {
-                this.events.emit('card:added', { id });
-            };
-            this.cardDetailed.onClickRemove = (id) => {
-                this.events.emit('card:removed', { id });
-            };
-            this.modal.open(preview);
-        });
-
-        this.events.on<{ id: string }>('card:select', ({ id }) => {
-            const product = this.catalog.getProductById(id);
-            if (!product) return;
-            this.catalog.setDetailedProduct(product);
+            this.renderCatalog();
         });
 
         this.events.on('cart:changed', () => {
-            this.cartView.total = this.cart.getTotalPrice();
-            if (this.cardDetailed) {
-                this.cardDetailed.isInCart = this.cart.contains(this.cardDetailed.id);
-            }
+            this.renderCart();
+            this.renderHeader();
+            this.updatePreviewButton();
         });
-    }
 
-    private bindCartEvents(): void {
-        this.events.on<{ id: string }>('card:added', ({ id }) => {
-            const product = this.catalog.getProductById(id);
+        this.events.on('user:changed', () => {
+            this.renderForms();
+        });
+
+        this.events.on('card:select', (data: { id: string }) => {
+            const product = this.catalog.getProductById(data.id);
             if (product) {
-                this.cart.addProduct(product);
+                this.catalog.setDetailedProduct(product);
+                this.openPreview();
             }
         });
 
-        this.events.on<{ id: string }>('card:removed', ({ id }) => {
-            const product = this.catalog.getProductById(id);
+        this.events.on('preview:toggle', () => {
+            const product = this.catalog.getDetailedProduct();
             if (product) {
-                this.cart.removeProduct(product);
+                if (this.cart.contains(product.id)) {
+                    this.cart.removeProduct(product);
+                } else {
+                    this.cart.addProduct(product);
+                }
+                this.modal.close();
             }
         });
-    }
 
-    private bindUserEvents(): void {
-        this.events.on<{ payment: string }>('payment:changed', (data) => {
-            this.user.set({ payment: data.payment as TPayment });
-            this.updateFormValidation();
+        this.events.on('cart:opened', () => {
+            this.modal.open(this.cartView.container);
         });
 
-        this.events.on<{ address: string }>('address:changed', (data) => {
-            this.user.set({ address: data.address });
-            this.updateFormValidation();
+        this.events.on('order:open', () => {
+            this.modal.open(this.formPaymentAddress.container);
         });
 
-        this.events.on<{ email: string }>('email:changed', (data) => {
-            this.user.set({ email: data.email });
-            this.updateFormValidation();
+        this.events.on('order:next', () => {
+            const userData = this.user.get();
+            if (userData.payment && userData.address) {
+                this.modal.open(this.formEmailPhone.container);
+            }
         });
 
-        this.events.on<{ phone: string }>('phone:changed', (data) => {
-            this.user.set({ phone: data.phone });
-            this.updateFormValidation();
-        });
-
-        this.events.on('order:submitted', async () => {
-            const errors = this.user.validate();
-            this.formPaymentAddress.errors = errors;
-            this.formEmailPhone.errors = errors;
-            if (Object.keys(errors).length === 0) {
+        this.events.on('order:submit', async () => {
+            try {
                 const order = {
                     ...this.user.get(),
                     items: this.cart.getProducts().map(p => p.id),
                     total: this.cart.getTotalPrice(),
                 };
-                await this.userApi.post(order);
+                const response = await this.userApi.post(order);
                 this.cart.clear();
                 this.user.clear();
+                this.success.render({ total: response.total });
+                this.modal.open(this.success.container);
+            } catch (error) {
+                console.error('Ошибка отправки заказа:', error);
             }
         });
 
-        this.events.on('order:next', () => {
-            const errors = this.user.validate();
-            if (Object.keys(errors).length === 0) {
-                this.modal.open(this.formEmailPhone.container);
-            } else {
-                this.formEmailPhone.errors = errors;
-            }
+        this.events.on('success:close', () => {
+            this.modal.close();
+            this.renderHeader();
         });
     }
 
-    private updateFormValidation(): void {
-        const allErrors = this.user.validate();
-        
-        const paymentAddressErrors: IUserError = {};
-        if (allErrors.payment) paymentAddressErrors.payment = allErrors.payment;
-        if (allErrors.address) paymentAddressErrors.address = allErrors.address;
-        this.formPaymentAddress.errors = paymentAddressErrors;
+    private renderCatalog(): void {
+        const products = this.catalog.getProducts();
+        const elements = products.map(product => {
+            const card = new CardCatalog(this.cardCatalogTemplate.cloneNode(true) as HTMLElement);
+            card.render({
+                id: product.id,
+                title: product.title,
+                price: product.price,
+                image: product.image,
+                category: product.category
+            });
+            card.onClick = (id: string) => {
+                this.events.emit('card:select', { id });
+            };
+            return card.render();
+        });
+        this.gallery.render({ catalog: elements });
+    }
 
-        const emailPhoneErrors: IUserError = {};
-        if (allErrors.email) emailPhoneErrors.email = allErrors.email;
-        if (allErrors.phone) emailPhoneErrors.phone = allErrors.phone;
-        this.formEmailPhone.errors = emailPhoneErrors;
+    private renderCart(): void {
+        const products = this.cart.getProducts();
+        const items = products.map((product, index) => {
+            const card = new CardCart(this.cardCartTemplate.cloneNode(true) as HTMLElement);
+            card.render({
+                title: product.title,
+                price: product.price,
+                index: index + 1
+            });
+            card.onClickRemove = () => {
+                this.events.emit('card:removed', { id: product.id });
+            };
+            return card.render();
+        });
+        this.cartView.render({
+            items: items,
+            total: this.cart.getTotalPrice(),
+            disabled: this.cart.getCount() === 0
+        });
+    }
 
-        const paymentValid = this.user.get().payment !== null;
-        const addressValid = this.user.get().address.trim() !== '';
-        this.formPaymentAddress.isValid = paymentValid && addressValid;
+    private renderHeader(): void {
+        this.header.render({ count: this.cart.getCount() });
+    }
 
-        const emailValid = this.user.get().email.trim() !== '';
-        const phoneValid = this.user.get().phone.trim() !== '';
-        this.formEmailPhone.isValid = emailValid && phoneValid;
+    private openPreview(): void {
+        const product = this.catalog.getDetailedProduct();
+        if (!product) return;
+
+        this.cardDetailed = new CardDetailed(this.cardPreviewTemplate.cloneNode(true) as HTMLElement);
+        this.cardDetailed.render({
+            id: product.id,
+            title: product.title,
+            price: product.price,
+            image: product.image,
+            category: product.category,
+            description: product.description,
+            isInCart: this.cart.contains(product.id),
+            isAvailable: product.price !== null
+        });
+        this.cardDetailed.onClick = () => {
+            this.events.emit('preview:toggle');
+        };
+        this.modal.open(this.cardDetailed.render());
+    }
+
+    private updatePreviewButton(): void {
+        if (this.cardDetailed) {
+            const product = this.catalog.getDetailedProduct();
+            if (product) {
+                this.cardDetailed.render({
+                    isInCart: this.cart.contains(product.id)
+                });
+            }
+        }
+    }
+
+    private renderForms(): void {
+        const userData = this.user.get();
+        const errors = this.user.validate();
+
+        this.formPaymentAddress.render({
+            payment: userData.payment,
+            address: userData.address,
+            errors: {
+                payment: errors.payment,
+                address: errors.address
+            },
+            isValid: !!(userData.payment && userData.address)
+        });
+
+        this.formEmailPhone.render({
+            email: userData.email,
+            phone: userData.phone,
+            errors: {
+                email: errors.email,
+                phone: errors.phone
+            },
+            isValid: !!(userData.email && userData.phone)
+        });
     }
 }

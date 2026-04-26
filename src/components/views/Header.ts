@@ -1,36 +1,24 @@
 import { Component } from "../base/Component";
-import { ICartCount } from "../../types";
-import {
-    ERROR_NO_HEADER_CART_BUTTON,
-    ERROR_NO_HEADER_CART_COUNT,
-} from "../../utils/constants";
-import { findElement } from "../../utils/utils";
 import { IEvents } from "../base/Events";
 
+export class Header extends Component<any> {
+    private _cartButton: HTMLElement;
+    private _counter: HTMLElement;
 
-export class Header extends Component<ICartCount> {
-    protected _cartButton: HTMLButtonElement;
-    protected _countElement: HTMLElement;
-
-    constructor(container: HTMLElement, private events:IEvents) {
+    constructor(container: HTMLElement, private events: IEvents) {
         super(container);
-        this._cartButton = findElement<HTMLButtonElement>(
-            this._container,
-            '.header__basket',
-            ERROR_NO_HEADER_CART_BUTTON
-        );
-        this._countElement = findElement<HTMLElement>(
-            this._container,
-            '.header__basket-counter',
-            ERROR_NO_HEADER_CART_COUNT
-        );
+        this._cartButton = container.querySelector('.header__cart') as HTMLElement;
+        this._counter = container.querySelector('.header__cart-counter') as HTMLElement;
+
         this._cartButton.addEventListener('click', () => {
             this.events.emit('cart:opened');
-        })
+        });
     }
 
-    set count(value: number) {
-        this._countElement.textContent = String(value);
+    render(data: any): HTMLElement {
+        if (data.count !== undefined && this._counter) {
+            this._counter.textContent = String(data.count);
+        }
+        return this._container;
     }
 }
-    

@@ -1,57 +1,22 @@
 import { Component } from "../base/Component";
-import {
-    ICard,
-    IProduct,
-} from "../../types";
-import {
-    ERROR_NO_CARD_TITLE,
-    ERROR_NO_CARD_PRICE,
-    TEXT_PRICE_APPENDIX,
-    TEXT_PRICE_UNAVAILABLE,
-} from "../../utils/constants";
-import { findElement } from "../../utils/utils";
 
-
-export abstract class Card<T extends ICard> extends Component<T> {
+export abstract class Card<T> extends Component<T> {
     protected _title: HTMLElement;
     protected _price: HTMLElement;
-    protected _isAvailable: boolean = true;
-    protected _id: string = '';
 
-    protected constructor(container: HTMLElement) {
+    constructor(container: HTMLElement) {
         super(container);
-
-        this._title = findElement<HTMLElement>(
-            this._container,
-            '.card__title',
-            ERROR_NO_CARD_TITLE
-        );
-
-        this._price = findElement<HTMLElement>(
-            this._container,
-            '.card__price',
-            ERROR_NO_CARD_PRICE
-        );
+        this._title = container.querySelector('.card__title') as HTMLElement;
+        this._price = container.querySelector('.card__price') as HTMLElement;
     }
 
-    public set data(product: IProduct) {
-        this._id = product.id;
-        this.title = product.title;
-        this.price = product.price;
+    set title(value: string) {
+        if (this._title) this._title.textContent = value;
     }
 
-    public set title(value: string) {
-        this._title.textContent = value;
-    }
-
-    public get id(): string {
-        return this._id;
-    }
-
-    public set price(value: number | null) {
-        this._isAvailable = value !== null;
-        this._price.textContent = this._isAvailable
-        ? value + TEXT_PRICE_APPENDIX
-        : TEXT_PRICE_UNAVAILABLE;
+    set price(value: number | null) {
+        if (this._price) {
+            this._price.textContent = value !== null ? `${value} синапсов` : 'Цена не указана';
+        }
     }
 }

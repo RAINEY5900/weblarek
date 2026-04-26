@@ -1,53 +1,26 @@
-import { Component } from "../base/Component";
-import { IProduct } from "../../types";
-import { findElement } from "../../utils/utils";
-import {
-    TEXT_PRICE_APPENDIX,
-    TEXT_PRICE_UNAVAILABLE,
-    ERROR_NO_CARD_DELETE_BUTTON,
-    ERROR_NO_CARD_TITLE,
-    ERROR_NO_CARD_PRICE,
-} from "../../utils/constants";
+import { Card } from "./Card";
 
-
-export class CardCart extends Component<IProduct> {
+export class CardCart extends Card<any> {
+    private _index: HTMLElement;
     private _deleteButton: HTMLButtonElement;
-    private _title: HTMLElement;
-    private _price: HTMLElement;
-    private _id: string = '';
-    onClickRemove: (id: string) => void = () => {};
+    onClickRemove: () => void = () => {};
 
     constructor(container: HTMLElement) {
         super(container);
-
-        this._title = findElement(
-            this._container,
-            '.card__title',
-            ERROR_NO_CARD_TITLE
-        );
-        this._price = findElement(
-            this._container,
-            '.card__price',
-            ERROR_NO_CARD_PRICE
-        );
-        this._deleteButton = findElement<HTMLButtonElement>(
-            this._container,
-            '.card__button',
-            ERROR_NO_CARD_DELETE_BUTTON
-        );
-
+        this._index = container.querySelector('.basket__item-index') as HTMLElement;
+        this._deleteButton = container.querySelector('.card__button') as HTMLButtonElement;
+        
         this._deleteButton.addEventListener('click', () => {
-            if (this._id) {
-                this.onClickRemove(this._id);
-            }
+            this.onClickRemove();
         });
     }
 
-    set product(value: IProduct) {
-        this._id = value.id;
-        this._title.textContent = value.title;
-        this._price.textContent = value.price !== null
-            ? String(value.price) + TEXT_PRICE_APPENDIX
-            : TEXT_PRICE_UNAVAILABLE;
+    render(data: any): HTMLElement {
+        this.title = data.title;
+        this.price = data.price;
+        if (this._index && data.index) {
+            this._index.textContent = String(data.index);
+        }
+        return this._container;
     }
 }

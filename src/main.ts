@@ -14,8 +14,10 @@ import { FormPaymentAddress } from './components/views/FormPaymentAddress';
 import { FormEmailPhone } from './components/views/FormEmailPhone';
 import { Success } from './components/views/Success';
 import { CartView } from './components/views/Cart';
+import { CardCatalog } from './components/views/CardCatalog';
+import { CardCart } from './components/views/CardCart';
+import { CardDetailed } from './components/views/CardDetailed';
 import { cloneTemplate, ensureElement } from './utils/utils';
-import { IProduct } from './types';
 import './scss/styles.scss';
 
 const events = new EventEmitter();
@@ -23,17 +25,19 @@ const api = new Api(API_URL);
 
 const catalog = new Catalog(events);
 const cart = new Cart(events);
-const user = new User();
+const user = new User(events);
 const userApi = new UserApi(api);
 
 const modal = new Modal(
     ensureElement<HTMLElement>('#modal-container'),
     events
 );
+
 const header = new Header(
     ensureElement<HTMLElement>('.header'),
     events
 );
+
 const gallery = new Gallery(
     ensureElement<HTMLElement>('.gallery'),
     events
@@ -59,6 +63,10 @@ const success = new Success(
     events
 );
 
+const cardCatalogTemplate = cloneTemplate('#card-catalog') as HTMLElement;
+const cardCartTemplate = cloneTemplate('#card-basket') as HTMLElement;
+const cardPreviewTemplate = cloneTemplate('#card-preview') as HTMLElement;
+
 new Presenter(
     events,
     catalog,
@@ -67,61 +75,12 @@ new Presenter(
     userApi,
     gallery,
     modal,
+    header,
     cartView,
     formPaymentAddress,
     formEmailPhone,
-    success
+    success,
+    cardCatalogTemplate,
+    cardCartTemplate,
+    cardPreviewTemplate
 );
-
-(async () => {
-    const data = await userApi.get();
-    catalog.setProducts(data.items);
-})();
-
-events.on('cart:changed', () => {
-    header.count = cart.getCount();
-    cartView.data = {
-        items: cart.getProducts(),
-        total: cart.getTotalPrice(),
-        disabled: cart.getCount() === 0,
-    };
-    cartView.onCardRemove = (id) => {
-        events.emit('card:removed', { id });
-    };
-});
-
-events.on('cart:opened', () => {
-    modal.open(cartView.container);
-});
-
-events.on('order:open', () => {
-    formPaymentAddress.errors = {};
-    formPaymentAddress.payment = null;
-    formPaymentAddress.address = '';
-    modal.open(formPaymentAddress.container);
-});
-
-events.on('order:next', () => {
-    formEmailPhone.errors = {};
-    formEmailPhone.email = '';
-    formEmailPhone.phone = '';
-    modal.open(formEmailPhone.container);
-});
-
-events.on('order:submitted', async () => {
-    const order = {
-        ...user.get(),
-        items: cart.getProducts().map((p: IProduct) => p.id),
-        total: cart.getTotalPrice(),
-    };
-    const response = await userApi.post(order);
-    cart.clear();
-    user.clear();
-    success.total = response.total;
-    modal.open(success.container);
-});
-
-events.on('success:close', () => {
-    modal.close();
-    header.count = cart.getCount();
-});
