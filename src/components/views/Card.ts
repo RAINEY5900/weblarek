@@ -1,4 +1,4 @@
-import { Component } from "../base/Component";
+import { Component } from '../base/Component';
 
 export abstract class Card<T> extends Component<T> {
     protected _title: HTMLElement;

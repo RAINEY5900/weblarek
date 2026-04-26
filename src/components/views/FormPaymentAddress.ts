@@ -1,7 +1,15 @@
 import { Form } from './Form';
 import { IEvents } from '../base/Events';
+import { IUserError } from '../../types';
 
-export class FormPaymentAddress extends Form<any> {
+interface IPaymentAddressData {
+    payment: string | null;
+    address: string;
+    errors: IUserError;
+    isValid: boolean;
+}
+
+export class FormPaymentAddress extends Form<IPaymentAddressData> {
     private _paymentButtons: NodeListOf<HTMLButtonElement>;
     private _addressInput: HTMLInputElement;
 
@@ -21,19 +29,29 @@ export class FormPaymentAddress extends Form<any> {
         });
     }
 
-    render(data: any): HTMLElement {
-        if (data.payment !== undefined) {
-            this._paymentButtons.forEach(button => {
-                if (button.value === data.payment) {
-                    button.classList.add('active');
-                } else {
-                    button.classList.remove('active');
-                }
-            });
+    get container(): HTMLElement {
+        return this._container;
+    }
+
+    set payment(value: string | null) {
+        this._paymentButtons.forEach(button => {
+            if (button.value === value) {
+                button.classList.add('active');
+            } else {
+                button.classList.remove('active');
+            }
+        });
+    }
+
+    set address(value: string) {
+        if (this._addressInput) {
+            this._addressInput.value = value;
         }
-        if (data.address !== undefined && this._addressInput) {
-            this._addressInput.value = data.address;
-        }
+    }
+
+    render(data: IPaymentAddressData): HTMLElement {
+        this.payment = data.payment;
+        this.address = data.address;
         this.errors = data.errors;
         this.isValid = data.isValid;
         return this._container;

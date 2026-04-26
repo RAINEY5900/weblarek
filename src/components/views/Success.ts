@@ -1,7 +1,11 @@
-import { Component } from "../base/Component";
-import { IEvents } from "../base/Events";
+import { Component } from '../base/Component';
+import { IEvents } from '../base/Events';
 
-export class Success extends Component<any> {
+interface ISuccessData {
+    total: number;
+}
+
+export class Success extends Component<ISuccessData> {
     private _closeButton: HTMLButtonElement;
     private _totalElement: HTMLElement;
 
@@ -15,10 +19,18 @@ export class Success extends Component<any> {
         });
     }
 
-    render(data: any): HTMLElement {
-        if (data.total !== undefined && this._totalElement) {
-            this._totalElement.textContent = `Списано ${data.total} синапсов`;
+    get container(): HTMLElement {
+        return this._container;
+    }
+
+    set total(value: number) {
+        if (this._totalElement) {
+            this._totalElement.textContent = `Списано ${value} синапсов`;
         }
+    }
+
+    render(data: ISuccessData): HTMLElement {
+        this.total = data.total;
         return this._container;
     }
 }

@@ -1,8 +1,7 @@
-import { Card } from "./Card";
-import { CDN_URL } from "../../utils/constants";
+import { Card } from './Card';
+import { CDN_URL } from '../../utils/constants';
 
 interface ICardCatalogData {
-    id: string;
     title: string;
     price: number | null;
     image: string;
@@ -12,21 +11,19 @@ interface ICardCatalogData {
 export class CardCatalog extends Card<ICardCatalogData> {
     private _image: HTMLImageElement;
     private _category: HTMLElement;
-    private _id: string = '';
-    public onClick: (id: string) => void = () => {};
 
-    constructor(container: HTMLElement) {
+    constructor(container: HTMLElement, private onClickHandler: () => void) {
         super(container);
         this._image = container.querySelector('.card__image') as HTMLImageElement;
         this._category = container.querySelector('.card__category') as HTMLElement;
         
         container.addEventListener('click', () => {
-            this.onClick(this._id);
+            this.onClickHandler();
         });
     }
 
-    set id(value: string) {
-        this._id = value;
+    get container(): HTMLElement {
+        return this._container;
     }
 
     set image(value: string) {
@@ -42,7 +39,6 @@ export class CardCatalog extends Card<ICardCatalogData> {
     }
 
     render(data: ICardCatalogData): HTMLElement {
-        this.id = data.id;
         this.title = data.title;
         this.price = data.price;
         this.image = data.image;

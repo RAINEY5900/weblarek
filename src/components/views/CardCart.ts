@@ -1,4 +1,4 @@
-import { Card } from "./Card";
+import { Card } from './Card';
 
 interface ICardCartData {
     title: string;
@@ -9,17 +9,22 @@ interface ICardCartData {
 export class CardCart extends Card<ICardCartData> {
     private _index: HTMLElement;
     private _deleteButton: HTMLButtonElement;
-    public onClickRemove: () => void = () => {};
 
-    constructor(container: HTMLElement) {
+    constructor(container: HTMLElement, private onRemoveHandler: () => void) {
         super(container);
         this._index = container.querySelector('.basket__item-index') as HTMLElement;
-        this._deleteButton = container.querySelector('.card__button') as HTMLButtonElement;
+        this._deleteButton = container.querySelector('.basket__item-delete') as HTMLButtonElement;
         
-        this._deleteButton.addEventListener('click', (e) => {
-            e.stopPropagation();
-            this.onClickRemove();
-        });
+        if (this._deleteButton) {
+            this._deleteButton.addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.onRemoveHandler();
+            });
+        }
+    }
+
+    get container(): HTMLElement {
+        return this._container;
     }
 
     set index(value: number) {

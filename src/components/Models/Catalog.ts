@@ -1,6 +1,5 @@
-import { IProduct } from "../../types";
-import { IEvents } from "../base/Events";
-
+import { IProduct } from '../../types';
+import { IEvents } from '../base/Events';
 
 export class Catalog {
     private products: IProduct[] = [];
@@ -18,9 +17,7 @@ export class Catalog {
     }
 
     public getProductById(id: string): IProduct | undefined {
-        return this.products.find(
-            product => product.id === id
-        );
+        return this.products.find(product => product.id === id);
     }
 
     public setDetailedProduct(product: IProduct): void {

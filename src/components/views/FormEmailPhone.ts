@@ -1,7 +1,15 @@
 import { Form } from './Form';
 import { IEvents } from '../base/Events';
+import { IUserError } from '../../types';
 
-export class FormEmailPhone extends Form<any> {
+interface IEmailPhoneData {
+    email: string;
+    phone: string;
+    errors: IUserError;
+    isValid: boolean;
+}
+
+export class FormEmailPhone extends Form<IEmailPhoneData> {
     private _emailInput: HTMLInputElement;
     private _phoneInput: HTMLInputElement;
 
@@ -19,13 +27,25 @@ export class FormEmailPhone extends Form<any> {
         });
     }
 
-    render(data: any): HTMLElement {
-        if (data.email !== undefined && this._emailInput) {
-            this._emailInput.value = data.email;
+    get container(): HTMLElement {
+        return this._container;
+    }
+
+    set email(value: string) {
+        if (this._emailInput) {
+            this._emailInput.value = value;
         }
-        if (data.phone !== undefined && this._phoneInput) {
-            this._phoneInput.value = data.phone;
+    }
+
+    set phone(value: string) {
+        if (this._phoneInput) {
+            this._phoneInput.value = value;
         }
+    }
+
+    render(data: IEmailPhoneData): HTMLElement {
+        this.email = data.email;
+        this.phone = data.phone;
         this.errors = data.errors;
         this.isValid = data.isValid;
         return this._container;

@@ -1,7 +1,13 @@
-import { Component } from "../base/Component";
-import { IEvents } from "../base/Events";
+import { Component } from '../base/Component';
+import { IEvents } from '../base/Events';
 
-export class CartView extends Component<void> {
+interface ICartViewData {
+    items: HTMLElement[];
+    total: number;
+    disabled: boolean;
+}
+
+export class CartView extends Component<ICartViewData> {
     private _listElement: HTMLElement;
     private _totalElement: HTMLElement;
     private _buttonElement: HTMLButtonElement;
@@ -39,5 +45,12 @@ export class CartView extends Component<void> {
         if (this._buttonElement) {
             this._buttonElement.disabled = value;
         }
+    }
+
+    render(data: ICartViewData): HTMLElement {
+        this.items = data.items;
+        this.total = data.total;
+        this.disabled = data.disabled;
+        return this._container;
     }
 }

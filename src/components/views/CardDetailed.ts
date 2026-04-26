@@ -1,7 +1,6 @@
-import { CardCatalog } from "./CardCatalog";
+import { CardCatalog } from './CardCatalog';
 
 interface ICardDetailedData {
-    id?: string;
     title?: string;
     price?: number | null;
     image?: string;
@@ -14,18 +13,15 @@ interface ICardDetailedData {
 export class CardDetailed extends CardCatalog {
     private _description: HTMLElement;
     private _button: HTMLButtonElement;
-    private _isInCart: boolean = false;
-    private _isAvailable: boolean = true;
-    public onClick: () => void = () => {};
 
-    constructor(container: HTMLElement) {
-        super(container);
+    constructor(container: HTMLElement, onToggle: () => void) {
+        super(container, onToggle);
         this._description = container.querySelector('.card__text') as HTMLElement;
         this._button = container.querySelector('.card__button') as HTMLButtonElement;
-        
-        this._button.addEventListener('click', () => {
-            this.onClick();
-        });
+    }
+
+    get container(): HTMLElement {
+        return this._container;
     }
 
     set description(value: string) {
@@ -35,31 +31,21 @@ export class CardDetailed extends CardCatalog {
     }
 
     set isInCart(value: boolean) {
-        this._isInCart = value;
-        this.updateButton();
+        if (this._button) {
+            this._button.textContent = value ? 'Убрать из корзины' : 'В корзину';
+        }
     }
 
     set isAvailable(value: boolean) {
-        this._isAvailable = value;
-        this.updateButton();
-    }
-
-    private updateButton(): void {
-        if (!this._button) return;
-        if (!this._isAvailable) {
-            this._button.disabled = true;
-            this._button.textContent = 'Недоступно';
-        } else if (this._isInCart) {
-            this._button.disabled = false;
-            this._button.textContent = 'Убрать из корзины';
-        } else {
-            this._button.disabled = false;
-            this._button.textContent = 'В корзину';
+        if (this._button) {
+            this._button.disabled = !value;
+            if (!value) {
+                this._button.textContent = 'Недоступно';
+            }
         }
     }
 
     render(data: ICardDetailedData = {}): HTMLElement {
-        if (data.id !== undefined) this.id = data.id;
         if (data.title !== undefined) this.title = data.title;
         if (data.price !== undefined) this.price = data.price;
         if (data.image !== undefined) this.image = data.image;

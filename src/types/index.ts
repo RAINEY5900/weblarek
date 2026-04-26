@@ -25,7 +25,6 @@ export type IUserError = Partial<
   Record<keyof IUser, string>
 >;
 
-
 export type TPayment = 'card' | 'cash' | null;
 
 export interface IProducts {
@@ -76,3 +75,13 @@ export interface ICartView {
     total: number;
     disabled: boolean;
 }
+
+// Добавляем недостающие экспорты
+export interface IBuyer {
+    payment: TPayment;
+    email: string;
+    phone: string;
+    address: string;
+}
+
+export type ValidationErrors = Partial<Record<keyof IBuyer, string>>;

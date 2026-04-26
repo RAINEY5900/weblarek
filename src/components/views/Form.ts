@@ -1,7 +1,8 @@
-import { Component } from "../base/Component";
-import { IEvents } from "../base/Events";
+import { Component } from '../base/Component';
+import { IEvents } from '../base/Events';
+import { IForm, IUserError } from '../../types';
 
-export abstract class Form<T> extends Component<T> {
+export abstract class Form<T extends IForm> extends Component<T> {
     protected _submitButton: HTMLButtonElement;
     protected _errorsElement: HTMLElement;
 
@@ -17,7 +18,7 @@ export abstract class Form<T> extends Component<T> {
         });
     }
 
-    set errors(value: any) {
+    set errors(value: IUserError) {
         if (this._errorsElement && value) {
             const errorsList = Object.values(value).filter(Boolean);
             this._errorsElement.textContent = errorsList.join(', ');

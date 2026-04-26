@@ -1,23 +1,22 @@
-// @ts-nocheck
-import { IEvents } from "../base/Events";
-import { IUserError, TPayment } from "../../types";
-import { Catalog } from "../models/Catalog";
-import { Cart } from "../models/Cart";
-import { User } from "../models/User";
-import { UserApi } from "../models/UserApi";
-import { Gallery } from "../views/Gallery";
-import { Modal } from "../views/Modal";
-import { Header } from "../views/Header";
-import { FormPaymentAddress } from "../views/FormPaymentAddress";
-import { FormEmailPhone } from "../views/FormEmailPhone";
-import { CartView } from "../views/Cart";
-import { CardCatalog } from "../views/CardCatalog";
-import { CardCart } from "../views/CardCart";
-import { CardDetailed } from "../views/CardDetailed";
-import { Success } from "../views/Success";
+import { IEvents } from '../base/Events';
+import { TPayment, IUserError } from '../../types';
+import { Catalog } from '../models/Catalog';
+import { Cart } from '../models/Cart';
+import { User } from '../models/User';
+import { UserApi } from '../models/UserApi';
+import { Gallery } from '../views/Gallery';
+import { Modal } from '../views/Modal';
+import { Header } from '../views/Header';
+import { FormPaymentAddress } from '../views/FormPaymentAddress';
+import { FormEmailPhone } from '../views/FormEmailPhone';
+import { CartView } from '../views/CartView';
+import { CardCatalog } from '../views/CardCatalog';
+import { CardCart } from '../views/CardCart';
+import { CardDetailed } from '../views/CardDetailed';
+import { Success } from '../views/Success';
 
 export class Presenter {
-    private cardDetailed: CardDetailed | null = null;
+    private cardDetailed: CardDetailed;
 
     constructor(
         private events: IEvents,
@@ -36,14 +35,14 @@ export class Presenter {
         private cardCartTemplate: HTMLElement,
         private cardPreviewTemplate: HTMLElement
     ) {
+        this.cardDetailed = new CardDetailed(
+            this.cardPreviewTemplate.cloneNode(true) as HTMLElement,
+            () => {
+                this.events.emit('preview:toggle');
+            }
+        );
         this.bindEvents();
         this.loadCatalog();
-        
-        // Создаем экземпляр превью один раз
-        this.cardDetailed = new CardDetailed(this.cardPreviewTemplate.cloneNode(true) as HTMLElement);
-        this.cardDetailed.onClick = () => {
-            this.events.emit('preview:toggle');
-        };
     }
 
     private async loadCatalog(): Promise<void> {
@@ -83,14 +82,14 @@ export class Presenter {
 
         this.events.on('preview:toggle', () => {
             const product = this.catalog.getDetailedProduct();
-            if (product) {
-                if (this.cart.contains(product.id)) {
-                    this.cart.removeProduct(product);
-                } else {
-                    this.cart.addProduct(product);
-                }
-                this.modal.close();
+            if (!product) return;
+            
+            if (this.cart.contains(product.id)) {
+                this.cart.removeProduct(product);
+            } else {
+                this.cart.addProduct(product);
             }
+            this.modal.close();
         });
 
         this.events.on('cart:opened', () => {
@@ -107,8 +106,12 @@ export class Presenter {
 
         this.events.on('order:submit', async () => {
             try {
+                const userData = this.user.get();
                 const order = {
-                    ...this.user.get(),
+                    payment: userData.payment as TPayment,
+                    address: userData.address || '',
+                    email: userData.email || '',
+                    phone: userData.phone || '',
                     items: this.cart.getProducts().map(p => p.id),
                     total: this.cart.getTotalPrice(),
                 };
@@ -154,17 +157,18 @@ export class Presenter {
     private renderCatalog(): void {
         const products = this.catalog.getProducts();
         const elements = products.map(product => {
-            const card = new CardCatalog(this.cardCatalogTemplate.cloneNode(true) as HTMLElement);
+            const card = new CardCatalog(
+                this.cardCatalogTemplate.cloneNode(true) as HTMLElement,
+                () => {
+                    this.events.emit('card:select', { id: product.id });
+                }
+            );
             card.render({
-                id: product.id,
                 title: product.title,
                 price: product.price,
                 image: product.image,
                 category: product.category
             });
-            card.onClick = (id: string) => {
-                this.events.emit('card:select', { id });
-            };
             return card.container;
         });
         this.gallery.render({ catalog: elements });
@@ -173,21 +177,25 @@ export class Presenter {
     private renderCart(): void {
         const products = this.cart.getProducts();
         const items = products.map((product, index) => {
-            const card = new CardCart(this.cardCartTemplate.cloneNode(true) as HTMLElement);
+            const card = new CardCart(
+                this.cardCartTemplate.cloneNode(true) as HTMLElement,
+                () => {
+                    this.events.emit('card:removed', { id: product.id });
+                }
+            );
             card.render({
                 title: product.title,
                 price: product.price,
                 index: index + 1
             });
-            card.onClickRemove = () => {
-                this.events.emit('card:removed', { id: product.id });
-            };
             return card.container;
         });
         
-        this.cartView.items = items;
-        this.cartView.total = this.cart.getTotalPrice();
-        this.cartView.disabled = this.cart.getCount() === 0;
+        this.cartView.render({
+            items: items,
+            total: this.cart.getTotalPrice(),
+            disabled: this.cart.getCount() === 0
+        });
     }
 
     private renderHeader(): void {
@@ -199,7 +207,6 @@ export class Presenter {
         if (!product) return;
 
         this.cardDetailed.render({
-            id: product.id,
             title: product.title,
             price: product.price,
             image: product.image,
@@ -213,7 +220,7 @@ export class Presenter {
 
     private updatePreviewButton(): void {
         const product = this.catalog.getDetailedProduct();
-        if (this.cardDetailed && product) {
+        if (product) {
             this.cardDetailed.isInCart = this.cart.contains(product.id);
         }
     }
@@ -222,23 +229,25 @@ export class Presenter {
         const userData = this.user.get();
         const errors = this.user.validate();
 
+        const paymentAddressErrors: IUserError = {};
+        if (errors.payment) paymentAddressErrors.payment = errors.payment;
+        if (errors.address) paymentAddressErrors.address = errors.address;
+
+        const emailPhoneErrors: IUserError = {};
+        if (errors.email) emailPhoneErrors.email = errors.email;
+        if (errors.phone) emailPhoneErrors.phone = errors.phone;
+
         this.formPaymentAddress.render({
-            payment: userData.payment,
-            address: userData.address,
-            errors: {
-                payment: errors.payment,
-                address: errors.address
-            },
+            payment: userData.payment || null,
+            address: userData.address || '',
+            errors: paymentAddressErrors,
             isValid: !!(userData.payment && userData.address)
         });
 
         this.formEmailPhone.render({
-            email: userData.email,
-            phone: userData.phone,
-            errors: {
-                email: errors.email,
-                phone: errors.phone
-            },
+            email: userData.email || '',
+            phone: userData.phone || '',
+            errors: emailPhoneErrors,
             isValid: !!(userData.email && userData.phone)
         });
     }

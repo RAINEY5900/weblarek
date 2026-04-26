@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { EventEmitter } from './components/base/Events';
 import { Api } from './components/base/Api';
 import { API_URL } from './utils/constants';
@@ -14,9 +13,6 @@ import { FormPaymentAddress } from './components/views/FormPaymentAddress';
 import { FormEmailPhone } from './components/views/FormEmailPhone';
 import { Success } from './components/views/Success';
 import { CartView } from './components/views/CartView';
-import { CardCatalog } from './components/views/CardCatalog';
-import { CardCart } from './components/views/CardCart';
-import { CardDetailed } from './components/views/CardDetailed';
 import { cloneTemplate, ensureElement } from './utils/utils';
 import './scss/styles.scss';
 
@@ -39,8 +35,7 @@ const header = new Header(
 );
 
 const gallery = new Gallery(
-    ensureElement<HTMLElement>('.gallery'),
-    events
+    ensureElement<HTMLElement>('.gallery')
 );
 
 const formPaymentAddress = new FormPaymentAddress(

@@ -1,13 +1,12 @@
-import { Component } from "../base/Component";
-import { IEvents } from "../base/Events";
-import { findElement } from "../../utils/utils";
+import { Component } from '../base/Component';
+import { IEvents } from '../base/Events';
+import { findElement } from '../../utils/utils';
 import {
     ERROR_NO_MODAL_CONTENT,
     ERROR_NO_MODAL_CLOSE,
-} from "../../utils/constants";
+} from '../../utils/constants';
 
 export class Modal extends Component<void> {
-    protected _content: HTMLElement | null = null;
     private _modalContent: HTMLElement;
 
     constructor(container: HTMLElement, private events: IEvents) {
@@ -34,15 +33,17 @@ export class Modal extends Component<void> {
         }
     }
 
+    get container(): HTMLElement {
+        return this._container;
+    }
+
     open(content: HTMLElement): void {
-        this._content = content;
         this._modalContent.replaceChildren(content);
         this._container.classList.add('modal_active');
         this.events.emit('modal:opened');
     }
 
     close(): void {
-        this._content = null;
         this._modalContent.replaceChildren();
         this._container.classList.remove('modal_active');
         this.events.emit('modal:closed');

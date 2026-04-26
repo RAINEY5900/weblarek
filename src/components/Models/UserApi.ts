@@ -1,26 +1,14 @@
-import { 
-    IApi, 
-    IOrderRequest,
-    IOrderResponse, 
-    IProducts,
-} from "../../types";
-import {
-    ROUTE_ORDER,
-    ROUTE_PRODUCT,
-} from "../../utils/constants";
-
+import { Api } from '../base/Api';
+import { IOrderRequest, IOrderResponse, IProducts } from '../../types';
 
 export class UserApi {
-    constructor(private api: IApi) {}
+    constructor(private api: Api) {}
 
-
-    public async get(): Promise<IProducts> {
-        const data = await this.api.get<IProducts>(ROUTE_PRODUCT);
-        return data;
+    async get(): Promise<IProducts> {
+        return this.api.get('/product');
     }
 
-    public async post(data: IOrderRequest): Promise<IOrderResponse> {
-        const response = await this.api.post<IOrderResponse>(ROUTE_ORDER, data);
-        return response;
+    async post(order: IOrderRequest): Promise<IOrderResponse> {
+        return this.api.post('/order', order);
     }
 }

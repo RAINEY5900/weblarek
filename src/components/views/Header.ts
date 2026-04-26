@@ -1,7 +1,11 @@
-import { Component } from "../base/Component";
-import { IEvents } from "../base/Events";
+import { Component } from '../base/Component';
+import { IEvents } from '../base/Events';
 
-export class Header extends Component<any> {
+interface IHeaderData {
+    count: number;
+}
+
+export class Header extends Component<IHeaderData> {
     private _cartButton: HTMLElement | null;
     private _counter: HTMLElement | null;
 
@@ -17,10 +21,18 @@ export class Header extends Component<any> {
         }
     }
 
-    render(data: { count: number }): HTMLElement {
-        if (this._counter && data.count !== undefined) {
-            this._counter.textContent = String(data.count);
+    get container(): HTMLElement {
+        return this._container;
+    }
+
+    set count(value: number) {
+        if (this._counter) {
+            this._counter.textContent = String(value);
         }
+    }
+
+    render(data: IHeaderData): HTMLElement {
+        this.count = data.count;
         return this._container;
     }
 }
