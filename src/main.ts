@@ -13,7 +13,7 @@ import { Modal } from './components/views/Modal';
 import { FormPaymentAddress } from './components/views/FormPaymentAddress';
 import { FormEmailPhone } from './components/views/FormEmailPhone';
 import { Success } from './components/views/Success';
-import { CartView } from './components/views/Cart';
+import { CartView } from './components/views/CartView';
 import { CardCatalog } from './components/views/CardCatalog';
 import { CardCart } from './components/views/CardCart';
 import { CardDetailed } from './components/views/CardDetailed';

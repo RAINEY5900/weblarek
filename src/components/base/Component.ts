@@ -11,12 +11,4 @@ export abstract class Component<T> {
         }
         return this._container;
     }
-
-    setAttribute(name: string, value: string): void {
-        this._container.setAttribute(name, value);
-    }
-
-    getAttribute(name: string): string {
-        return this._container.getAttribute(name) || '';
-    }
 }

@@ -1,11 +1,19 @@
 import { Card } from "./Card";
 import { CDN_URL } from "../../utils/constants";
 
-export class CardCatalog extends Card<any> {
+interface ICardCatalogData {
+    id: string;
+    title: string;
+    price: number | null;
+    image: string;
+    category: string;
+}
+
+export class CardCatalog extends Card<ICardCatalogData> {
     private _image: HTMLImageElement;
     private _category: HTMLElement;
     private _id: string = '';
-    onClick: (id: string) => void = () => {};
+    public onClick: (id: string) => void = () => {};
 
     constructor(container: HTMLElement) {
         super(container);
@@ -33,7 +41,7 @@ export class CardCatalog extends Card<any> {
         }
     }
 
-    render(data: { id: string; title: string; price: number | null; image: string; category: string }): HTMLElement {
+    render(data: ICardCatalogData): HTMLElement {
         this.id = data.id;
         this.title = data.title;
         this.price = data.price;

@@ -1,9 +1,15 @@
 import { Card } from "./Card";
 
-export class CardCart extends Card<any> {
+interface ICardCartData {
+    title: string;
+    price: number | null;
+    index: number;
+}
+
+export class CardCart extends Card<ICardCartData> {
     private _index: HTMLElement;
     private _deleteButton: HTMLButtonElement;
-    onClickRemove: () => void = () => {};
+    public onClickRemove: () => void = () => {};
 
     constructor(container: HTMLElement) {
         super(container);
@@ -22,7 +28,7 @@ export class CardCart extends Card<any> {
         }
     }
 
-    render(data: { title: string; price: number | null; index: number }): HTMLElement {
+    render(data: ICardCartData): HTMLElement {
         this.title = data.title;
         this.price = data.price;
         this.index = data.index;

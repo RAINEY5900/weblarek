@@ -1,11 +1,22 @@
 import { CardCatalog } from "./CardCatalog";
 
+interface ICardDetailedData {
+    id?: string;
+    title?: string;
+    price?: number | null;
+    image?: string;
+    category?: string;
+    description?: string;
+    isInCart?: boolean;
+    isAvailable?: boolean;
+}
+
 export class CardDetailed extends CardCatalog {
     private _description: HTMLElement;
     private _button: HTMLButtonElement;
     private _isInCart: boolean = false;
     private _isAvailable: boolean = true;
-    onClick: () => void = () => {};
+    public onClick: () => void = () => {};
 
     constructor(container: HTMLElement) {
         super(container);
@@ -47,7 +58,7 @@ export class CardDetailed extends CardCatalog {
         }
     }
 
-    render(data: { id?: string; title?: string; price?: number | null; image?: string; category?: string; description?: string; isInCart?: boolean; isAvailable?: boolean }): HTMLElement {
+    render(data: ICardDetailedData = {}): HTMLElement {
         if (data.id !== undefined) this.id = data.id;
         if (data.title !== undefined) this.title = data.title;
         if (data.price !== undefined) this.price = data.price;
