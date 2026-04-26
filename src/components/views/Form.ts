@@ -9,12 +9,19 @@ export abstract class Form<T extends IForm> extends Component<T> {
     constructor(container: HTMLElement, protected events: IEvents) {
         super(container);
         this._submitButton = container.querySelector('button[type="submit"]') as HTMLButtonElement;
+        if (!this._submitButton) {
+            this._submitButton = container.querySelector('.order__button') as HTMLButtonElement;
+        }
         this._errorsElement = container.querySelector('.form__errors') as HTMLElement;
         
         this._container.addEventListener('submit', (e) => {
             e.preventDefault();
             const formName = this._container.getAttribute('name');
-            this.events.emit(`${formName}:submit`);
+            if (formName === 'order') {
+                this.events.emit('order:next');
+            } else if (formName === 'contacts') {
+                this.events.emit('order:submit');
+            }
         });
     }
 

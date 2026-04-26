@@ -101,7 +101,12 @@ export class Presenter {
         });
 
         this.events.on('order:next', () => {
-            this.modal.open(this.formEmailPhone.container);
+            const userData = this.user.get();
+            const errors = this.user.validate();
+            
+            if (userData.payment && userData.address && !errors.payment && !errors.address) {
+                this.modal.open(this.formEmailPhone.container);
+            }
         });
 
         this.events.on('order:submit', async () => {
@@ -232,23 +237,27 @@ export class Presenter {
         const paymentAddressErrors: IUserError = {};
         if (errors.payment) paymentAddressErrors.payment = errors.payment;
         if (errors.address) paymentAddressErrors.address = errors.address;
-
-        const emailPhoneErrors: IUserError = {};
-        if (errors.email) emailPhoneErrors.email = errors.email;
-        if (errors.phone) emailPhoneErrors.phone = errors.phone;
+        
+        const isPaymentAddressValid = !!(userData.payment && userData.address);
 
         this.formPaymentAddress.render({
             payment: userData.payment || null,
             address: userData.address || '',
             errors: paymentAddressErrors,
-            isValid: !!(userData.payment && userData.address)
+            isValid: isPaymentAddressValid
         });
+
+        const emailPhoneErrors: IUserError = {};
+        if (errors.email) emailPhoneErrors.email = errors.email;
+        if (errors.phone) emailPhoneErrors.phone = errors.phone;
+        
+        const isEmailPhoneValid = !!(userData.email && userData.phone);
 
         this.formEmailPhone.render({
             email: userData.email || '',
             phone: userData.phone || '',
             errors: emailPhoneErrors,
-            isValid: !!(userData.email && userData.phone)
+            isValid: isEmailPhoneValid
         });
     }
 }
