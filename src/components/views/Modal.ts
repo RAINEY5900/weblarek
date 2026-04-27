@@ -33,10 +33,6 @@ export class Modal extends Component<void> {
         }
     }
 
-    get container(): HTMLElement {
-        return this._container;
-    }
-
     open(content: HTMLElement): void {
         this._modalContent.replaceChildren(content);
         this._container.classList.add('modal_active');

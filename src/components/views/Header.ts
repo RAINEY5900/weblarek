@@ -21,18 +21,9 @@ export class Header extends Component<IHeaderData> {
         }
     }
 
-    get container(): HTMLElement {
-        return this._container;
-    }
-
     set count(value: number) {
         if (this._counter) {
             this._counter.textContent = String(value);
         }
-    }
-
-    render(data: IHeaderData): HTMLElement {
-        this.count = data.count;
-        return this._container;
     }
 }

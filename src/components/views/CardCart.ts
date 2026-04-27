@@ -23,20 +23,9 @@ export class CardCart extends Card<ICardCartData> {
         }
     }
 
-    get container(): HTMLElement {
-        return this._container;
-    }
-
     set index(value: number) {
         if (this._index) {
             this._index.textContent = String(value);
         }
-    }
-
-    render(data: ICardCartData): HTMLElement {
-        this.title = data.title;
-        this.price = data.price;
-        this.index = data.index;
-        return this._container;
     }
 }

@@ -22,10 +22,6 @@ export class CardCatalog extends Card<ICardCatalogData> {
         });
     }
 
-    get container(): HTMLElement {
-        return this._container;
-    }
-
     set image(value: string) {
         if (this._image && value) {
             this._image.src = `${CDN_URL}${value}`;
@@ -36,13 +32,5 @@ export class CardCatalog extends Card<ICardCatalogData> {
         if (this._category && value) {
             this._category.textContent = value;
         }
-    }
-
-    render(data: ICardCatalogData): HTMLElement {
-        this.title = data.title;
-        this.price = data.price;
-        this.image = data.image;
-        this.category = data.category;
-        return this._container;
     }
 }

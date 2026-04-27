@@ -12,9 +12,4 @@ export class Gallery extends Component<IGalleryData> {
     set catalog(elements: HTMLElement[]) {
         this._container.replaceChildren(...elements);
     }
-
-    render(data: IGalleryData): HTMLElement {
-        this.catalog = data.catalog;
-        return this._container;
-    }
 }

@@ -93,11 +93,11 @@ export class Presenter {
         });
 
         this.events.on('cart:opened', () => {
-            this.modal.open(this.cartView.container);
+            this.modal.open(this.cartView.render());
         });
 
         this.events.on('order:open', () => {
-            this.modal.open(this.formPaymentAddress.container);
+            this.modal.open(this.formPaymentAddress.render());
         });
 
         this.events.on('order:next', () => {
@@ -105,7 +105,7 @@ export class Presenter {
             const errors = this.user.validate();
             
             if (userData.payment && userData.address && !errors.payment && !errors.address) {
-                this.modal.open(this.formEmailPhone.container);
+                this.modal.open(this.formEmailPhone.render());
             }
         });
 
@@ -124,7 +124,7 @@ export class Presenter {
                 this.cart.clear();
                 this.user.clear();
                 this.success.render({ total: response.total });
-                this.modal.open(this.success.container);
+                this.modal.open(this.success.render());
             } catch (error) {
                 console.error('Ошибка отправки заказа:', error);
             }
@@ -174,7 +174,7 @@ export class Presenter {
                 image: product.image,
                 category: product.category
             });
-            return card.container;
+            return card.render();
         });
         this.gallery.render({ catalog: elements });
     }
@@ -193,7 +193,7 @@ export class Presenter {
                 price: product.price,
                 index: index + 1
             });
-            return card.container;
+            return card.render();
         });
         
         this.cartView.render({
@@ -220,13 +220,15 @@ export class Presenter {
             isInCart: this.cart.contains(product.id),
             isAvailable: product.price !== null
         });
-        this.modal.open(this.cardDetailed.container);
+        this.modal.open(this.cardDetailed.render());
     }
 
     private updatePreviewButton(): void {
         const product = this.catalog.getDetailedProduct();
         if (product) {
-            this.cardDetailed.isInCart = this.cart.contains(product.id);
+            this.cardDetailed.render({
+                isInCart: this.cart.contains(product.id)
+            });
         }
     }
 

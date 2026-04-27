@@ -25,10 +25,6 @@ export class CartView extends Component<ICartViewData> {
         });
     }
 
-    get container(): HTMLElement {
-        return this._container;
-    }
-
     set items(elements: HTMLElement[]) {
         if (this._listElement) {
             this._listElement.replaceChildren(...elements);
@@ -45,12 +41,5 @@ export class CartView extends Component<ICartViewData> {
         if (this._buttonElement) {
             this._buttonElement.disabled = value;
         }
-    }
-
-    render(data: ICartViewData): HTMLElement {
-        this.items = data.items;
-        this.total = data.total;
-        this.disabled = data.disabled;
-        return this._container;
     }
 }

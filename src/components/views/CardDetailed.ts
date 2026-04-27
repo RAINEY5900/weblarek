@@ -15,13 +15,16 @@ export class CardDetailed extends CardCatalog {
     private _button: HTMLButtonElement;
 
     constructor(container: HTMLElement, onToggle: () => void) {
-        super(container, onToggle);
+        super(container, () => {});
         this._description = container.querySelector('.card__text') as HTMLElement;
         this._button = container.querySelector('.card__button') as HTMLButtonElement;
-    }
-
-    get container(): HTMLElement {
-        return this._container;
+        
+        if (this._button) {
+            this._button.addEventListener('click', (e) => {
+                e.stopPropagation();
+                onToggle();
+            });
+        }
     }
 
     set description(value: string) {

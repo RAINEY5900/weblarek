@@ -19,18 +19,9 @@ export class Success extends Component<ISuccessData> {
         });
     }
 
-    get container(): HTMLElement {
-        return this._container;
-    }
-
     set total(value: number) {
         if (this._totalElement) {
             this._totalElement.textContent = `Списано ${value} синапсов`;
         }
-    }
-
-    render(data: ISuccessData): HTMLElement {
-        this.total = data.total;
-        return this._container;
     }
 }
